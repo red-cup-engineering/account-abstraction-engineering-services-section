@@ -1,0 +1,12 @@
+[submodule "erc-7677-paymaster-service"]
+	path = services/erc-7677-paymaster-service
+	url = https://github.com/red-cup-engineering/erc-7677-paymaster-service.git
+	branch = main
+[submodule "erc-4337-bundler-service"]
+	path = services/erc-4337-bundler-service
+	url = https://github.com/red-cup-engineering/erc-4337-bundler-service.git
+	branch = main
+[submodule "enterprise-account-provisioning-service"]
+	path = services/enterprise-account-provisioning-service
+	url = https://github.com/red-cup-engineering/enterprise-account-provisioning-service.git
+	branch = main
