@@ -6,5 +6,10 @@
     "url": "git+https://github.com/red-cup-engineering/account-abstraction-services-section.git"
   },
   "description": "ERC-4337 account-abstraction arena; bundling, sponsorship, and technical account-provisioning actors live below this locus.",
-  "files": []
+  "files": [],
+  "license": "MIT",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  }
 }
