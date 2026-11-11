@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { createHttpServer } from "@red-cup-engineering/http-services-section/node-server";
+import { createHttpServer } from "@red-cup-engineering/http-engineering-services-section/node-server";
 
 import { createEnterpriseProvisioningPaymasterService } from "../src/paymaster-service.mjs";
 
