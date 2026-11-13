@@ -2,7 +2,7 @@ FROM node:24-slim
 
 WORKDIR /app
 RUN npm init -y && npm install --omit=dev ethers@6.17.0
-COPY services/sign-ethereum-digest-with-cloud-kms-services-section /app/node_modules/@red-cup-engineering/sign-ethereum-digest-with-cloud-kms-services-section
+COPY services/sign-ethereum-digest-with-cloud-kms-services-section /app/node_modules/@red-cup-engineering/sign-ethereum-digest-with-cloud-kms-engineering-services-section
 
 WORKDIR /app/services/account-abstraction-services-section/services/enterprise-account-provisioning-service
 COPY services/account-abstraction-services-section/services/enterprise-account-provisioning-service/bin ./bin

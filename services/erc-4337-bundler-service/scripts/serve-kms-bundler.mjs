@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { JsonRpcProvider } from "ethers";
-import { createCloudKmsSecp256k1Signer } from "@red-cup-engineering/sign-ethereum-digest-with-cloud-kms-services-section";
+import { createCloudKmsSecp256k1Signer } from "@red-cup-engineering/sign-ethereum-digest-with-cloud-kms-engineering-services-section";
 import { submitUserOperationBundleToEntryPoint } from "../src/kms-handle-ops-submitter.mjs";
 const port = Number(process.env.PORT ?? 8080);
 const required = (name) => { const value = process.env[name]; if (!value) throw new Error(`${name} is required`); return value; };

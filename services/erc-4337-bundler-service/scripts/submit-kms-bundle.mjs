@@ -2,7 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 import { JsonRpcProvider } from "ethers";
-import { createCloudKmsSecp256k1Signer } from "@red-cup-engineering/sign-ethereum-digest-with-cloud-kms-services-section";
+import { createCloudKmsSecp256k1Signer } from "@red-cup-engineering/sign-ethereum-digest-with-cloud-kms-engineering-services-section";
 import { submitUserOperationBundleToEntryPoint } from "../src/kms-handle-ops-submitter.mjs";
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/u;
