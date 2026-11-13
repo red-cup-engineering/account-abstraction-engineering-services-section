@@ -5,7 +5,7 @@ Requires=bare-cedar-fog-anvil.service
 
 [Service]
 Type=simple
-WorkingDirectory=/home/emsenn/info/lib/emsenn/services/561-group/services/red-cup-engineering/services/software-services-section/blockchain-services-section/services/ethereum-services-section/services/account-abstraction-services-section/services/erc-7677-paymaster-service
+WorkingDirectory=/home/emsenn/info/lib/emsenn/services/561-group/services/red-cup-engineering/services/software-services-section/blockchain-services-section/services/ethereum-services-section/services/account-abstraction-engineering-services-section/services/erc-7677-paymaster-service
 Environment=HOST=127.0.0.1
 Environment=PORT=7677
 Environment=EVM_RPC_URL=http://127.0.0.1:8545

@@ -3,7 +3,7 @@ steps:
     args:
       - build
       - --file
-      - services/account-abstraction-services-section/services/enterprise-account-provisioning-service/ops/cloud-run/Dockerfile
+      - services/account-abstraction-engineering-services-section/services/enterprise-account-provisioning-service/ops/cloud-run/Dockerfile
       - --tag
       - ${_IMAGE}
       - .
