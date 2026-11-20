@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { argValue } from "@red-cup-engineering/parse-javascript-argv-service";
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve, sep } from "node:path";
@@ -15,8 +16,8 @@ const SETTLEMENT_CAIP2 = process.env.SETTLEMENT_CAIP2 ?? "eip155:5615611";
 if (SETTLEMENT_CAIP2 !== "eip155:5615611") throw new Error(`enterprise-account provisioning is cut over to ${SETTLEMENT_CAIP2}`);
 const DEFAULT_DEPLOYMENT = resolve(HERE, "../../../../data/deployments/eip155-5615611-semiotic-exchange.json");
 
-function option(name) { const at = process.argv.indexOf(name); return at === -1 ? undefined : process.argv[at + 1]; }
-function required(name) { const value = option(name) ?? process.env[name.replace(/^--/u, "").replaceAll("-", "_").toUpperCase()]; if (!value) throw new Error(`${name} is required`); return value; }
+
+function required(name) { const value = argValue(name) ?? process.env[name.replace(/^--/u, "").replaceAll("-", "_").toUpperCase()]; if (!value) throw new Error(`${name} is required`); return value; }
 
 async function metadataAccessToken() {
   const response = await fetch("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", {
@@ -33,8 +34,8 @@ const policySigner = required("--policy-signer");
 const policyKeyVersion = required("--policy-key-version");
 const deployerAddress = required("--deployer-address");
 const deployerKeyVersion = required("--deployer-kms-key-version");
-const minimumFundingWei = BigInt(option("--minimum-account-funding-wei") ?? process.env.MINIMUM_ACCOUNT_FUNDING_WEI ?? "0");
-const workspace = resolve(option("--workspace") ?? process.env.WORKSPACE ?? DEFAULT_WORKSPACE);
+const minimumFundingWei = BigInt(argValue("--minimum-account-funding-wei") ?? process.env.MINIMUM_ACCOUNT_FUNDING_WEI ?? "0");
+const workspace = resolve(argValue("--workspace") ?? process.env.WORKSPACE ?? DEFAULT_WORKSPACE);
 const receiptOnly = process.argv.includes("--receipt-only") || process.env.RECEIPT_ONLY === "true";
 const suppliedSettlement = receiptOnly ? undefined : required("--settlement");
 const settlement = suppliedSettlement === undefined ? null : resolve(isAbsolute(suppliedSettlement) ? suppliedSettlement : join(workspace, suppliedSettlement));
@@ -46,7 +47,7 @@ const nodeId = receiptOnly ? required("--node-id") : manifest["x-agentic-metro-e
 if (!nodeId) throw new Error("settlement does not declare x-agentic-metro-enterprise.node-id");
 const bindingPath = settlement === null ? null : join(settlement, "content", "evm", "accounts", "eip155-5615611.json");
 
-const deployment = JSON.parse(readFileSync(option("--deployment") ?? process.env.DEPLOYMENT_PATH ?? DEFAULT_DEPLOYMENT, "utf8"));
+const deployment = JSON.parse(readFileSync(argValue("--deployment") ?? process.env.DEPLOYMENT_PATH ?? DEFAULT_DEPLOYMENT, "utf8"));
 const deployerSigner = createCloudKmsSecp256k1Signer({
   keyVersion: deployerKeyVersion,
   address: deployerAddress,

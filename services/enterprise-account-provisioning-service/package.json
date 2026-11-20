@@ -27,7 +27,8 @@
     "@red-cup-engineering/uri-engineering-services-section": "workspace:*",
     "@a2a-js/sdk": "1.0.0-beta.0",
     "@red-cup-engineering/semiotic-eavt-engineering-services-section": "0.6.10",
-    "@red-cup-engineering/computer-code-engine": "^0.1.10"
+    "@red-cup-engineering/computer-code-engine": "^0.1.10",
+    "@red-cup-engineering/parse-javascript-argv-service": "^0.3.0 || 0.3.1-dev.0"
   },
   "scripts": {
     "check": "node --check scripts/provision-enterprise-account.mjs && node --check scripts/bind-enterprise-account.mjs && node --check scripts/serve-a2a.mjs && node --check src/account-binding.mjs && node --check src/provision-enterprise-account.mjs && node --check src/a2a-executor.mjs && node --check src/enterprise-account-provisioning-contract.mjs",

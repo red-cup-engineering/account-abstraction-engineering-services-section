@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { argValue } from "@red-cup-engineering/parse-javascript-argv-service";
 // The public ActivityStreams face is deliberately only an offer/contract
 // boundary.  It neither chooses a customer's wallet nor treats the local
 // development deployment as a production capability.
@@ -62,8 +63,8 @@ function identified(body) {
   const id = identifyNormalizedSemanticContent({ objectKind: "ethereum.enterprise-account-provisioning-record", semanticType: inferTy([], term), term, witnessRoot: EMPTY_WITNESS_ROOT }).token;
   return Object.freeze({ id, ...body });
 }
-function argument(flag) { const at = process.argv.indexOf(flag); return at < 0 ? undefined : process.argv[at + 1]; }
-function atNow() { return argument("--now") ?? new Date().toISOString(); }
+
+function atNow() { return argValue("--now") ?? new Date().toISOString(); }
 function dataRoot(env = process.env) { return resolve(env.ENTERPRISE_ACCOUNT_PROVISIONING_DATA_ROOT ?? `${HERE}/data`); }
 function witnessJournalAgent(env = process.env) {
   if (!env.SEAVT_DOCUMENT_AGENT) throw new Error("SEAVT_DOCUMENT_AGENT must name the provisioning provider's contracted witness-journal RDF A2A provider");
@@ -150,7 +151,7 @@ export async function run(activity, operation = "invoke-service", recordedAt = n
 if (process.argv.includes("--provider-cli") || (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))) {
   try {
     const activity = JSON.parse(readFileSync(0, "utf8"));
-    const output = await run(activity, argument("--operation") ?? "invoke-service", atNow());
+    const output = await run(activity, argValue("--operation") ?? "invoke-service", atNow());
     process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
     if (output.type === "Reject") process.exitCode = 2;
   } catch (error) { process.stderr.write(`${basename(process.argv[1])}: ${error.message}\n`); process.exitCode = 1; }

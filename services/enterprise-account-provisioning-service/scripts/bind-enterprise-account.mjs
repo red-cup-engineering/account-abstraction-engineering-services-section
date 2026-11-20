@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { argValue } from "@red-cup-engineering/parse-javascript-argv-service";
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
@@ -10,8 +11,8 @@ const HERE = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_WORKSPACE = resolve(HERE, "../../../../../../../../../../../../../..");
 const PROFILE = "org.emsenn.evm.sovereign-enterprise-account.v3";
 
-function option(name) { const at = process.argv.indexOf(name); return at === -1 ? undefined : process.argv[at + 1]; }
-function required(name) { const value = option(name); if (!value) throw new Error(`${name} is required`); return value; }
+
+function required(name) { const value = argValue(name); if (!value) throw new Error(`${name} is required`); return value; }
 function hashHex(value) { return keccak256(toUtf8Bytes(value)).toLowerCase(); }
 function selector(signature) { return new Interface([`function ${signature}`]).getFunction(signature).selector.slice(2).toLowerCase(); }
 function address(value, label) {
@@ -29,7 +30,7 @@ const provider = new JsonRpcProvider(rpcUrl, undefined, { batchMaxCount: 1 });
 async function rpc(method, params = []) { return provider.send(method, params); }
 async function ethCall(to, data) { return provider.call({ to, data }); }
 
-const workspace = resolve(option("--workspace") ?? DEFAULT_WORKSPACE);
+const workspace = resolve(argValue("--workspace") ?? DEFAULT_WORKSPACE);
 const suppliedSettlement = required("--settlement");
 const settlement = resolve(isAbsolute(suppliedSettlement) ? suppliedSettlement : join(workspace, suppliedSettlement));
 if (settlement !== workspace && !settlement.startsWith(`${workspace}${sep}`)) throw new Error("settlement must be inside the supplied workspace");
@@ -45,9 +46,9 @@ const enterpriseId = hashHex(urn);
 const accountAddress = address(required("--account"), "--account");
 const factoryAddress = address(required("--factory"), "--factory");
 const policySigner = address(required("--policy-signer"), "--policy-signer");
-const policyCustody = option("--policy-custody") ?? "settlement-private";
+const policyCustody = argValue("--policy-custody") ?? "settlement-private";
 if (!["settlement-private", "remote-cloud-kms-hsm"].includes(policyCustody)) throw new Error("--policy-custody is unsupported");
-const policyKeyVersion = option("--policy-key-version");
+const policyKeyVersion = argValue("--policy-key-version");
 if (policyCustody === "remote-cloud-kms-hsm" && !policyKeyVersion) throw new Error("remote Cloud KMS policy custody requires --policy-key-version");
 if (policyCustody === "settlement-private" && policyKeyVersion) throw new Error("local settlement custody cannot name a Cloud KMS key version");
 const userSalt = bytes32(required("--salt"), "--salt");
