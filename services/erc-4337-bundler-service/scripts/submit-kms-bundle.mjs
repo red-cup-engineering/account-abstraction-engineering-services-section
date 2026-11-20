@@ -44,11 +44,11 @@ const signer = createCloudKmsSecp256k1Signer({
   address: required("BUNDLER_SIGNER_ADDRESS"),
   accessToken: async () => (await fetch("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", { headers: { "metadata-flavor": "Google" } })).json().then(({ access_token }) => access_token),
 });
-const receipt = await submitUserOperationBundleToEntryPoint({
+const record = await submitUserOperationBundleToEntryPoint({
   ...input,
   rpc: provider.send.bind(provider),
   chainId: Number(required("CHAIN_ID")),
   entryPoint: required("ENTRY_POINT"),
   signer,
 });
-process.stdout.write(`${JSON.stringify({ type: "KmsHandleOpsBundleReceipt", version: 1, chain: `eip155:${required("CHAIN_ID")}`, ...receipt })}\n`);
+process.stdout.write(`${JSON.stringify({ type: "KmsHandleOpsBundleReceipt", version: 1, chain: `eip155:${required("CHAIN_ID")}`, ...record })}\n`);

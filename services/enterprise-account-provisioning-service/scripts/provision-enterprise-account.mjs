@@ -35,14 +35,14 @@ const deployerAddress = required("--deployer-address");
 const deployerKeyVersion = required("--deployer-kms-key-version");
 const minimumFundingWei = BigInt(option("--minimum-account-funding-wei") ?? process.env.MINIMUM_ACCOUNT_FUNDING_WEI ?? "0");
 const workspace = resolve(option("--workspace") ?? process.env.WORKSPACE ?? DEFAULT_WORKSPACE);
-const receiptOnly = process.argv.includes("--receipt-only") || process.env.RECEIPT_ONLY === "true";
-const suppliedSettlement = receiptOnly ? undefined : required("--settlement");
+const recordOnly = process.argv.includes("--receipt-only") || process.env.RECEIPT_ONLY === "true";
+const suppliedSettlement = recordOnly ? undefined : required("--settlement");
 const settlement = suppliedSettlement === undefined ? null : resolve(isAbsolute(suppliedSettlement) ? suppliedSettlement : join(workspace, suppliedSettlement));
 if (settlement !== null && settlement !== workspace && !settlement.startsWith(`${workspace}${sep}`)) throw new Error("settlement must be inside the supplied workspace");
 const manifestPath = settlement === null ? null : join(settlement, "package.json");
 if (manifestPath !== null && !existsSync(manifestPath)) throw new Error("settlement package.json is absent");
 const manifest = manifestPath === null ? null : JSON.parse(readFileSync(manifestPath, "utf8"));
-const nodeId = receiptOnly ? required("--node-id") : manifest["x-agentic-metro-enterprise"]?.["node-id"];
+const nodeId = recordOnly ? required("--node-id") : manifest["x-agentic-metro-enterprise"]?.["node-id"];
 if (!nodeId) throw new Error("settlement does not declare x-agentic-metro-enterprise.node-id");
 const bindingPath = settlement === null ? null : join(settlement, "content", "evm", "accounts", "eip155-5615611.json");
 
@@ -52,7 +52,7 @@ const deployerSigner = createCloudKmsSecp256k1Signer({
   address: deployerAddress,
   accessToken: metadataAccessToken,
 });
-const receipt = await provisionEnterpriseAccount({
+const record = await provisionEnterpriseAccount({
   rpcUrl,
   deployment,
   urn,
@@ -63,29 +63,29 @@ const receipt = await provisionEnterpriseAccount({
 const binding = createEnterpriseAccountBinding({
   nodeId,
   urn,
-  chainId: receipt.chainId,
-  account: receipt.account,
-  factory: receipt.factory,
-  policySigner: receipt.policySigner,
+  chainId: record.chainId,
+  account: record.account,
+  factory: record.factory,
+  policySigner: record.policySigner,
   policyCustody: "remote-cloud-kms-hsm",
   policyKeyVersion,
-  userSalt: receipt.userSalt,
-  transaction: receipt.deployment.transaction,
-  block: receipt.deployment.block,
+  userSalt: record.userSalt,
+  transaction: record.deployment.transaction,
+  block: record.deployment.block,
   accounting: {
-    authority: { enterpriseUrn: receipt.authority.enterpriseUrn, nodeId },
+    authority: { enterpriseUrn: record.authority.enterpriseUrn, nodeId },
     funding: {
-      source: receipt.funding.source,
-      treasury: receipt.funding.treasury,
-      custody: receipt.funding.custody,
+      source: record.funding.source,
+      treasury: record.funding.treasury,
+      custody: record.funding.custody,
       keyVersion: deployerKeyVersion,
-      minimumWei: receipt.funding.minimumWei,
-      balanceWei: receipt.funding.balanceWei,
-      transactions: [...receipt.funding.transactions],
+      minimumWei: record.funding.minimumWei,
+      balanceWei: record.funding.balanceWei,
+      transactions: [...record.funding.transactions],
     },
     chain: {
-      deployment: { ...receipt.chainAccounting.deployment },
-      idempotentReconciliation: receipt.chainAccounting.idempotentReconciliation,
+      deployment: { ...record.chainAccounting.deployment },
+      idempotentReconciliation: record.chainAccounting.idempotentReconciliation,
     },
   },
 });
@@ -101,10 +101,10 @@ process.stdout.write(`${JSON.stringify({
   protocol: "Cloud-KMS/CREATE2/ERC-4337",
   settlement,
   actor: urn,
-  account: receipt.account,
+  account: record.account,
   binding,
-  receipt,
+  receipt: record,
   localPrivateKeyMaterial: false,
   materialized: bindingPath !== null,
-  durableCarrier: receiptOnly ? "caller-supplied-existing-receipt-consumer" : "settlement-worktree-binding",
+  durableCarrier: recordOnly ? "caller-supplied-existing-receipt-consumer" : "settlement-worktree-binding",
 }, null, 2)}\n`);

@@ -65,17 +65,17 @@ function identified(body) {
 function argument(flag) { const at = process.argv.indexOf(flag); return at < 0 ? undefined : process.argv[at + 1]; }
 function atNow() { return argument("--now") ?? new Date().toISOString(); }
 function dataRoot(env = process.env) { return resolve(env.ENTERPRISE_ACCOUNT_PROVISIONING_DATA_ROOT ?? `${HERE}/data`); }
-function witnessJournalAgent(env = process.env) {
+function witnessLogAgent(env = process.env) {
   if (!env.SEAVT_DOCUMENT_AGENT) throw new Error("SEAVT_DOCUMENT_AGENT must name the provisioning provider's contracted witness-journal RDF A2A provider");
   return env.SEAVT_DOCUMENT_AGENT;
 }
 async function append(record, category, recordedAt, env, recorder = recordSettlementRecord) {
-  return recorder({ agentUrl: witnessJournalAgent(env), root: dataRoot(env), nodeId: NODE_ID, settlement: ACTOR, actor: ACTOR, category, recordedAt, record });
+  return recorder({ agentUrl: witnessLogAgent(env), root: dataRoot(env), nodeId: NODE_ID, settlement: ACTOR, actor: ACTOR, category, recordedAt, record });
 }
 function response(type, source, object, recordedAt) {
   return identified({ "@context": CONTEXT, type, actor: ACTOR, target: source?.actor ?? null, inReplyTo: source?.id ?? null, object, published: recordedAt });
 }
-async function refusal(source, reason, recordedAt, env, recorder) {
+async function rejection(source, reason, recordedAt, env, recorder) {
   const record = response("Reject", source, { type: "EnterpriseAccountProvisioningRefusal", reason,
     directEoaExecution: false, customerWalletSelected: false, customerMutation: false, chainMutation: false, assetSettlementClaimed: false }, recordedAt);
   try {
@@ -87,7 +87,7 @@ async function refusal(source, reason, recordedAt, env, recorder) {
       directEoaExecution: false, customerWalletSelected: false, customerMutation: false, chainMutation: false, assetSettlementClaimed: false }, recordedAt);
   }
 }
-function solicitationProblem(activity) {
+function requestProblem(activity) {
   const request = activity?.object?.request;
   if (activity?.["@context"] !== CONTEXT || activity.type !== "Offer" || activity.target !== ACTOR || activity.object?.type !== "ServiceSolicitation") return "solicitation-must-be-addressed-activitystreams-offer";
   if (!request || typeof request !== "object" || Array.isArray(request)) return "solicitation-must-carry-a-typed-provisioning-request";
@@ -133,18 +133,18 @@ async function missingCapability(source, stage, recordedAt, env, recorder) {
   }
 }
 export async function run(activity, operation = "invoke-service", recordedAt = new Date().toISOString(), env = process.env, recorder = recordSettlementRecord) {
-  if (!Number.isFinite(Date.parse(recordedAt))) return refusal(activity, "recordedAt-must-be-an-ISO-timestamp", new Date().toISOString(), env, recorder);
+  if (!Number.isFinite(Date.parse(recordedAt))) return rejection(activity, "recordedAt-must-be-an-ISO-timestamp", new Date().toISOString(), env, recorder);
   if (operation === "solicit-service") {
-    const problem = solicitationProblem(activity);
-    if (problem) return refusal(activity, problem, recordedAt, env, recorder);
+    const problem = requestProblem(activity);
+    if (problem) return rejection(activity, problem, recordedAt, env, recorder);
     return missingCapability(activity, "solicitation", recordedAt, env, recorder);
   }
   if (operation === "invoke-service") {
     const problem = invocationProblem(activity);
-    if (problem) return refusal(activity, problem, recordedAt, env, recorder);
+    if (problem) return rejection(activity, problem, recordedAt, env, recorder);
     return missingCapability(activity, "invocation", recordedAt, env, recorder);
   }
-  return refusal(activity, "unknown-provider-operation", recordedAt, env, recorder);
+  return rejection(activity, "unknown-provider-operation", recordedAt, env, recorder);
 }
 
 if (process.argv.includes("--provider-cli") || (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))) {
