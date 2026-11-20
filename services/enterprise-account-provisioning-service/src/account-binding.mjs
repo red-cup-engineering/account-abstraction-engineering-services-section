@@ -1,4 +1,4 @@
-import { keccak256, toUtf8Bytes } from "ethers";
+import { keccak256 } from "@red-cup-engineering/cryptographic-computer-data-engineering-services-section/keccak256";
 
 export const ENTERPRISE_ACCOUNT_BINDING_PROFILE = "org.emsenn.evm.sovereign-enterprise-account.v3";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/u;
@@ -15,7 +15,7 @@ export function validateEnterpriseAccountBinding(binding, nodeId) {
   const accountedTopology = [...legacyTopology, "accounting"].sort();
   if (topology.join("\0") !== legacyTopology.join("\0") && topology.join("\0") !== accountedTopology.join("\0")) failures.push("topology");
   if (binding?.profile !== ENTERPRISE_ACCOUNT_BINDING_PROFILE) failures.push("profile");
-  const expectedEnterpriseId = binding?.enterprise?.urn ? keccak256(toUtf8Bytes(binding.enterprise.urn)).toLowerCase() : "";
+  const expectedEnterpriseId = binding?.enterprise?.urn ? `0x${keccak256(Buffer.from(binding.enterprise.urn, "utf8")).toString("hex")}`.toLowerCase() : "";
   if (!exactKeys(binding?.enterprise, ["enterpriseId", "nodeId", "urn"]) || binding.enterprise.nodeId !== nodeId || !binding.enterprise.urn?.startsWith("urn:") || !/^0x[0-9a-fA-F]{64}$/u.test(binding.enterprise.enterpriseId ?? "") || binding.enterprise.enterpriseId.toLowerCase() !== expectedEnterpriseId) failures.push("enterprise");
   if (!exactKeys(binding?.chain, ["caip2", "chainId"]) || !Number.isSafeInteger(binding.chain.chainId) || binding.chain.chainId < 1 || binding.chain.caip2 !== `eip155:${binding.chain.chainId}`) failures.push("CAIP-2");
   if (!exactKeys(binding?.account, ["address", "caip10"]) || !/^0x[0-9a-fA-F]{40}$/u.test(binding.account.address ?? "") || binding.account.caip10 !== `${binding.chain?.caip2}:${binding.account.address}`) failures.push("CAIP-10");
@@ -70,7 +70,7 @@ export function createEnterpriseAccountBinding({
     : { signer: policySigner.toLowerCase(), custody: policyCustody };
   const binding = {
     profile: ENTERPRISE_ACCOUNT_BINDING_PROFILE,
-    enterprise: { nodeId, urn, enterpriseId: keccak256(toUtf8Bytes(urn)).toLowerCase() },
+    enterprise: { nodeId, urn, enterpriseId: `0x${keccak256(Buffer.from(urn, "utf8")).toString("hex")}`.toLowerCase() },
     chain: { chainId, caip2: `eip155:${chainId}` },
     account: { address: account.toLowerCase(), caip10: `eip155:${chainId}:${account.toLowerCase()}` },
     factory: { address: factory.toLowerCase(), userSalt: userSalt.toLowerCase() },
