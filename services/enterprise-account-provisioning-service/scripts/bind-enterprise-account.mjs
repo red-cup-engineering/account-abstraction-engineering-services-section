@@ -45,11 +45,11 @@ const enterpriseId = hashHex(urn);
 const accountAddress = address(required("--account"), "--account");
 const factoryAddress = address(required("--factory"), "--factory");
 const policySigner = address(required("--policy-signer"), "--policy-signer");
-const policyStorage = option("--policy-custody") ?? "settlement-private";
-if (!["settlement-private", "remote-cloud-kms-hsm"].includes(policyStorage)) throw new Error("--policy-custody is unsupported");
+const policyCustody = option("--policy-custody") ?? "settlement-private";
+if (!["settlement-private", "remote-cloud-kms-hsm"].includes(policyCustody)) throw new Error("--policy-custody is unsupported");
 const policyKeyVersion = option("--policy-key-version");
-if (policyStorage === "remote-cloud-kms-hsm" && !policyKeyVersion) throw new Error("remote Cloud KMS policy custody requires --policy-key-version");
-if (policyStorage === "settlement-private" && policyKeyVersion) throw new Error("local settlement custody cannot name a Cloud KMS key version");
+if (policyCustody === "remote-cloud-kms-hsm" && !policyKeyVersion) throw new Error("remote Cloud KMS policy custody requires --policy-key-version");
+if (policyCustody === "settlement-private" && policyKeyVersion) throw new Error("local settlement custody cannot name a Cloud KMS key version");
 const userSalt = bytes32(required("--salt"), "--salt");
 const transactionHash = bytes32(required("--transaction"), "--transaction");
 
@@ -76,10 +76,10 @@ for (const interfaceId of ["0x01ffc9a7", "0x1626ba7e", `0x${selector("eip712Doma
 const predicted = await ethCall(factoryAddress, `0x${selector("accountAddress(bytes32,address,bytes32)")}${enterpriseId.slice(2)}${wordAddress(policySigner)}${userSalt.slice(2)}`);
 if (`0x${predicted.slice(-40)}`.toLowerCase() !== accountAddress) throw new Error("factory CREATE2 prediction does not match the account");
 
-const record = await rpc("eth_getTransactionReceipt", [transactionHash]);
-if (!record || BigInt(record.status) !== 1n) throw new Error("account deployment transaction is absent or failed");
+const receipt = await rpc("eth_getTransactionReceipt", [transactionHash]);
+if (!receipt || BigInt(receipt.status) !== 1n) throw new Error("account deployment transaction is absent or failed");
 const deploymentEvent = hashHex("EnterpriseAccountDeployed(bytes32,address,address,bytes32)");
-const witnessed = record.logs.some((log) =>
+const witnessed = receipt.logs.some((log) =>
   log.address.toLowerCase() === factoryAddress
   && log.topics?.[0]?.toLowerCase() === deploymentEvent
   && log.topics?.[1]?.toLowerCase() === enterpriseId
@@ -96,11 +96,11 @@ const binding = createEnterpriseAccountBinding({
   account: accountAddress,
   factory: factoryAddress,
   policySigner,
-  policyCustody: policyStorage,
+  policyCustody,
   policyKeyVersion,
   userSalt,
   transaction: transactionHash,
-  block: Number(BigInt(record.blockNumber)),
+  block: Number(BigInt(receipt.blockNumber)),
 });
 
 const bindingPath = join(settlement, "content", "evm", "accounts", `eip155-${chainId}.json`);

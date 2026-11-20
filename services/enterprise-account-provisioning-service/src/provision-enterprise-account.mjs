@@ -82,9 +82,9 @@ async function signedTransaction({ provider, signer, to, data = "0x", value = 0n
   });
   transaction.signature = Signature.from(await signer.signDigest(transaction.unsignedHash));
   const sent = await provider.broadcastTransaction(transaction.serialized);
-  const record = await sent.wait(1, 120_000);
-  if (!record || record.status !== 1) throw new Error(`enterprise-account transaction failed: ${sent.hash}`);
-  return record;
+  const receipt = await sent.wait(1, 120_000);
+  if (!receipt || receipt.status !== 1) throw new Error(`enterprise-account transaction failed: ${sent.hash}`);
+  return receipt;
 }
 
 /**
@@ -141,10 +141,10 @@ export async function provisionEnterpriseAccount({
     fromBlock: factoryDeployment.blockNumber ?? 0,
   });
 
-  let deploymentRecord = null;
+  let deploymentReceipt = null;
   let accountCode = await provider.getCode(account);
   if (accountCode === "0x") {
-    deploymentRecord = await signedTransaction({
+    deploymentReceipt = await signedTransaction({
       provider,
       signer: { address: deployer, signDigest: deployerSigner.signDigest.bind(deployerSigner) },
       to: factory,
@@ -156,17 +156,17 @@ export async function provisionEnterpriseAccount({
   }
 
   let balance = await provider.getBalance(account);
-  const fundingRecords = [];
+  const fundingReceipts = [];
   if (balance < funding) {
-    const record = await signedTransaction({ provider, signer: { address: deployer, signDigest: deployerSigner.signDigest.bind(deployerSigner) }, to: account, value: funding - balance });
-    fundingRecords.push(record.hash);
+    const receipt = await signedTransaction({ provider, signer: { address: deployer, signDigest: deployerSigner.signDigest.bind(deployerSigner) }, to: account, value: funding - balance });
+    fundingReceipts.push(receipt.hash);
     balance = await provider.getBalance(account);
   }
   if (balance < funding) throw new Error("EnterpriseAccount remains below its required funding floor");
 
   const witness = deploymentWitness(await provider.getLogs(filter), salt);
-  const transaction = (witness.transactionHash ?? deploymentRecord?.hash)?.toLowerCase();
-  const block = Number(witness.blockNumber ?? deploymentRecord?.blockNumber);
+  const transaction = (witness.transactionHash ?? deploymentReceipt?.hash)?.toLowerCase();
+  const block = Number(witness.blockNumber ?? deploymentReceipt?.blockNumber);
   if (!BYTES32.test(transaction ?? "") || !Number.isSafeInteger(block) || block < 0) {
     throw new Error("enterprise-account deployment event has no durable transaction coordinate");
   }
@@ -183,10 +183,10 @@ export async function provisionEnterpriseAccount({
     userSalt: salt,
     deployment: Object.freeze({ transaction, block }),
     balanceWei: balance.toString(),
-    fundingTransactions: Object.freeze(fundingRecords),
+    fundingTransactions: Object.freeze(fundingReceipts),
     deployer,
     custody: deployerSigner.custody ?? "injected-remote-signer",
-    idempotent: deploymentRecord === null,
+    idempotent: deploymentReceipt === null,
     authority: Object.freeze({ enterpriseUrn: urn, enterpriseId }),
     policyCapability: Object.freeze({ signer }),
     funding: Object.freeze({
@@ -196,11 +196,11 @@ export async function provisionEnterpriseAccount({
       keyVersion: deployerSigner.keyVersion ?? null,
       minimumWei: funding.toString(),
       balanceWei: balance.toString(),
-      transactions: Object.freeze(fundingRecords),
+      transactions: Object.freeze(fundingReceipts),
     }),
     chainAccounting: Object.freeze({
       deployment: Object.freeze({ transaction, block }),
-      idempotentReconciliation: deploymentRecord === null,
+      idempotentReconciliation: deploymentReceipt === null,
     }),
   });
 }

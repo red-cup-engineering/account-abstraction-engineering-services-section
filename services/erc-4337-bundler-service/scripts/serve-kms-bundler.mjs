@@ -16,5 +16,5 @@ createServer(async (request, response) => {
   }
   if (request.method !== "POST" || request.url !== "/submit-user-operation-bundle") { response.writeHead(404); return response.end(); }
   const body = []; for await (const chunk of request) body.push(chunk);
-  try { const input = JSON.parse(Buffer.concat(body).toString("utf8")); const record = await submitUserOperationBundleToEntryPoint({ ...input, rpc: provider.send.bind(provider), chainId: Number(required("CHAIN_ID")), entryPoint: required("ENTRY_POINT"), signer }); response.writeHead(200, { "content-type": "application/json" }); response.end(JSON.stringify(record)); } catch (error) { response.writeHead(400, { "content-type": "application/json" }); response.end(JSON.stringify({ error: error.message })); }
+  try { const input = JSON.parse(Buffer.concat(body).toString("utf8")); const receipt = await submitUserOperationBundleToEntryPoint({ ...input, rpc: provider.send.bind(provider), chainId: Number(required("CHAIN_ID")), entryPoint: required("ENTRY_POINT"), signer }); response.writeHead(200, { "content-type": "application/json" }); response.end(JSON.stringify(receipt)); } catch (error) { response.writeHead(400, { "content-type": "application/json" }); response.end(JSON.stringify({ error: error.message })); }
 }).listen(port, process.env.HOST ?? "0.0.0.0");

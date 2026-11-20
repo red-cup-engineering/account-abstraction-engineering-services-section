@@ -10,10 +10,10 @@ function exactKeys(value, keys) {
 }
 export function validateEnterpriseAccountBinding(binding, nodeId) {
   const failures = [];
-  const graph = Object.keys(binding ?? {}).sort();
-  const legacyGraph = ["account", "chain", "deployment", "enterprise", "factory", "policy", "profile"].sort();
-  const accountedGraph = [...legacyGraph, "accounting"].sort();
-  if (graph.join("\0") !== legacyGraph.join("\0") && graph.join("\0") !== accountedGraph.join("\0")) failures.push("topology");
+  const topology = Object.keys(binding ?? {}).sort();
+  const legacyTopology = ["account", "chain", "deployment", "enterprise", "factory", "policy", "profile"].sort();
+  const accountedTopology = [...legacyTopology, "accounting"].sort();
+  if (topology.join("\0") !== legacyTopology.join("\0") && topology.join("\0") !== accountedTopology.join("\0")) failures.push("topology");
   if (binding?.profile !== ENTERPRISE_ACCOUNT_BINDING_PROFILE) failures.push("profile");
   const expectedEnterpriseId = binding?.enterprise?.urn ? keccak256(toUtf8Bytes(binding.enterprise.urn)).toLowerCase() : "";
   if (!exactKeys(binding?.enterprise, ["enterpriseId", "nodeId", "urn"]) || binding.enterprise.nodeId !== nodeId || !binding.enterprise.urn?.startsWith("urn:") || !/^0x[0-9a-fA-F]{64}$/u.test(binding.enterprise.enterpriseId ?? "") || binding.enterprise.enterpriseId.toLowerCase() !== expectedEnterpriseId) failures.push("enterprise");
@@ -58,16 +58,16 @@ export function createEnterpriseAccountBinding({
   account,
   factory,
   policySigner,
-  policyCustody: policyStorage,
+  policyCustody,
   policyKeyVersion,
   userSalt,
   transaction,
   block,
   accounting,
 }) {
-  const policy = policyStorage === "remote-cloud-kms-hsm"
-    ? { signer: policySigner.toLowerCase(), custody: policyStorage, keyVersion: policyKeyVersion }
-    : { signer: policySigner.toLowerCase(), custody: policyStorage };
+  const policy = policyCustody === "remote-cloud-kms-hsm"
+    ? { signer: policySigner.toLowerCase(), custody: policyCustody, keyVersion: policyKeyVersion }
+    : { signer: policySigner.toLowerCase(), custody: policyCustody };
   const binding = {
     profile: ENTERPRISE_ACCOUNT_BINDING_PROFILE,
     enterprise: { nodeId, urn, enterpriseId: keccak256(toUtf8Bytes(urn)).toLowerCase() },
