@@ -1,4 +1,5 @@
-import { createHash, randomBytes } from "node:crypto";
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { Wallet, decryptKeystoreJson, isKeystoreJson } from "ethers";
@@ -16,7 +17,7 @@ function password(path) {
 export function ensureSettlementPassword({ credentialRoot, urn, chainId }) {
   if (!urn?.startsWith("urn:") || !Number.isSafeInteger(chainId) || chainId < 1) throw new Error("settlement custody requires a stable URN and positive chain ID");
   const root = resolve(credentialRoot); mkdirSync(root, { recursive: true, mode: 0o700 }); privateFile(root, "credential root");
-  const directory = join(root, createHash("sha256").update(urn).digest("hex"));
+  const directory = join(root, sha256Hex(urn));
   mkdirSync(directory, { recursive: true, mode: 0o700 }); privateFile(directory, "settlement credential directory");
   const path = join(directory, `eip155-${chainId}.password`);
   if (!existsSync(path)) writeFileSync(path, `${randomBytes(48).toString("base64url")}\n`, { flag: "wx", mode: 0o600 });
